@@ -41,8 +41,8 @@
 
 tester:
     - test:     1
-      test-result:   "/home/trex/Results/100flow"           where we want to store reports
-      test-result-format: ["xlsx", "csv"]                   what type of report we want to store
+      name:     tc-1.1
+      test-result:   /home/trex/Results/tc-1.1.txt
       max-iteration: 8
       max-duration:  60
       acceptable-loss: 0.001
@@ -66,9 +66,8 @@ tester:
             percent: 25                   # 50 percent in one direction auto indicate calculate max pps for given packet size / 2
 
 
-
-    spyroot@gmail.com
-
+    Mustafa Bayramov
+    mbayramov@vmware.com
 """
 import ssl
 import sys
@@ -350,28 +349,29 @@ def console_report(console_output_tlb=None, generic_stats_tlb=None):
     :param generic_stats_tlb:
     :return: nothing
     """
-
-    for test_run in generic_stats_tlb:
-        test_result_entry = [test_run['iteration'],
-                             test_run['flow_id'],
-                             test_run['packet_size'],
-                             round(Decimal(test_run['average_lost']), 5),
-                             test_run['port_rx'],
-                             test_run['port_tx'],
-                             test_run['flow_status'],
-                             test_run['ingress_port'],
-                             test_run['egress_port'],
-                             test_run['tx_pps'],
-                             test_run['rx_pps'],
-                             test_run['tx_bps'],
-                             test_run['rx_bps'],
-                             test_run['latency_min'],
-                             test_run['latency_max'],
-                             round(Decimal(test_run['latency_avg']), 2),
-                             test_run['jitter'],
-                             test_run['aggregate_pps']]
-        console_output_tlb.add_row(test_result_entry)
-
+    try:
+        for test_run in generic_stats_tlb:
+            test_result_entry = [test_run['iteration'],
+                                 test_run['flow_id'],
+                                 test_run['packet_size'],
+                                 round(Decimal(test_run['average_lost']), 5),
+                                 test_run['port_rx'],
+                                 test_run['port_tx'],
+                                 test_run['flow_status'],
+                                 test_run['ingress_port'],
+                                 test_run['egress_port'],
+                                 test_run['tx_pps'],
+                                 test_run['rx_pps'],
+                                 test_run['tx_bps'],
+                                 test_run['rx_bps'],
+                                 test_run['latency_min'],
+                                 test_run['latency_max'],
+                                 round(Decimal(test_run['latency_avg']), 2),
+                                 test_run['jitter'],
+                                 test_run['aggregate_pps']]
+            console_output_tlb.add_row(test_result_entry)
+    except TypeError:
+           print "Can't build console output"
 
 def get_latency_stats(stats, flow_id):
     """
@@ -1155,7 +1155,7 @@ def tester(frame_size=0, throttle=0, test_scenario=None, generic_stats_tlb=None,
 
             # if test is not adaptive and we failed we break
             if finish is False and adaptive is False:
-                return False
+                return generic_stats_tlb
 
             sys.stdout.write("\r")
             sys.stdout.flush()
@@ -1287,6 +1287,8 @@ def imix_iteration_test(test_plan=None, generic_stats_tlb=None, console_output_t
     generic_stats_tlb = tester(test_scenario=test_plan,
                                generic_stats_tlb=generic_stats_tlb,
                                verbose=verbose)
+    if generic_stats_tlb is False:
+        print " wrong "
     # populate console report table
     console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
 
