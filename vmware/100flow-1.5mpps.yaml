@@ -1,3 +1,6 @@
+#
+#  Sample scenario for 64 byte packet 1 500 000 pps ( 1.5mpp ) total 3mpps bidirectional flow
+#
 scenario:
     - test:     1
       name:     "64byte-100flow"
