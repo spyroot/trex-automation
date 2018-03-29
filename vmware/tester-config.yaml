@@ -1,0 +1,7 @@
+tester:
+   # - test:     1
+   #   name:     "tc-1.1"
+   #   test-scenario:   "/home/trex/v2.36/automation/trex_control_plane/stl/examples.mb/tc-1.1.yaml"
+    - test: 10
+      name: "100flow"
+      test-scenario: "100flow-1.5mpps.yaml"
