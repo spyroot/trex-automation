@@ -41,8 +41,8 @@
 
 tester:
     - test:     1
-      name:     tc-1.1
-      test-result:   /home/trex/Results/tc-1.1.txt
+      test-result:   "/home/trex/Results/100flow"           where we want to store reports
+      test-result-format: ["xlsx", "csv"]                   what type of report we want to store
       max-iteration: 8
       max-duration:  60
       acceptable-loss: 0.001
@@ -68,6 +68,7 @@ tester:
 
     Mustafa Bayramov
     mbayramov@vmware.com
+
 """
 import ssl
 import sys
