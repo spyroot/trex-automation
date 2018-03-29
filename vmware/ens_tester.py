@@ -66,8 +66,8 @@ tester:
             percent: 25                   # 50 percent in one direction auto indicate calculate max pps for given packet size / 2
 
 
-    Mustafa Bayramov
-    mbayramov@vmware.com
+
+    spyroot@gmail.com
 
 """
 import ssl
