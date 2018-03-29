@@ -1,0 +1,55 @@
+scenario:
+    - test:     1
+      name:     "64byte-100flow"
+      test-result:   "/home/trex/Results/100flow"
+      test-result-format: ["xlsx", "csv"]                                              # xls indicate generate excel and csv
+      report-formater:  ['flow_id', 'tx_pps', 'rx_pps', 'flow_status', 'packet_size']  # keys used for csv file
+      max-iteration: 50                # how many iteration before we declare test failed.  if we pass target we move to another scenario
+      max-duration:  60                # test duration
+      acceptable-loss: 0.001
+      acceptable-rx-overflow: 0.001     # in case we have dups and rx overflow
+      adaptive: False                   # indicate if we fail a test we drop a rate to next pps
+      port_bw:  1000                    # port bandwidth
+      test-type: "imix-iteration"       # indicate we want to do packet iteration. each flow will be constructed with each respected packet size
+      flows:
+          - flow:   "64-byte-flow-l-r"       # Note at the moment I support only single range per flow. if you need more add another flow
+            ranges:
+                - range: "two"               # here we use range so we either define range or we indicate srcip/dstip
+                  src-start: "1.1.1.1"
+                  src-end: "1.1.1.10"
+                  dst-start: "2.1.1.2"
+                  dst-end: "2.1.1.2"
+            id:     1                       # each flow must have unique id we track stats based on that but we can group if need
+            description: "fixed 64 byte"
+            packet-size: 64
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]                 # egress port id or list of ports [0, 1]
+            ingress_port: [0]                # ingress port id or list of ports [0, 1]
+            rate-mode: fixed                 # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "1500000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+
+          - flow:   "64-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "2.1.1.1"
+                  src-end: "2.1.1.10"
+                  dst-start: "1.1.1.2"
+                  dst-end: "1.1.1.2"
+            id:     2
+            description: "fixed 64 byte"
+            packet-size: 64
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: fixed               # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "1500000pps"      # stream rate can either pps value or port percentage 10% or 1pps ( see another example)
+            latency: False
