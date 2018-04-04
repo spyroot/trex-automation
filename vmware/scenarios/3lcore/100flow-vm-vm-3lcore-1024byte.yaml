@@ -1,0 +1,139 @@
+scenario:
+    - test:     1
+      name:     "vm-to-vm 3lcore 1024 byte"
+      test-result:   "/home/trex/Results/vm-to-vm-3lcore-1024byte"
+      test-result-format: ["xlsx", "csv"]
+      report-formater:  ['flow_id', 'tx_pps', 'rx_pps', 'flow_status', 'packet_size']
+      max-iteration: 50
+      max-duration:  60
+      acceptable-loss: 0.001
+      acceptable-rx-overflow: 0.001
+      adaptive: False                   # indicate if we fail a test we drop a rate to next pps
+      port_bw:  1000                    # port bandwidth
+      test-type: "imix-iteration"       # indicate we want to do packet iteration. each flow will be constructed with each respected packet size
+      flows:
+          - flow:   "1024-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "1.1.1.1"
+                  src-end: "1.1.1.10"
+                  dst-start: "3.1.1.2"
+                  dst-end: "3.1.1.10"
+            id:     1
+            description: "tcp ack"
+            packet-size: 1024
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"     # vm 1 eth 2 port
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]                # egress port id or list of ports [0, 1]
+            ingress_port: [0]               # ingress port id or list of ports [0, 1]
+            rate-mode: fixed                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "325000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+
+          - flow:   "1024-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "3.1.1.1"
+                  src-end: "3.1.1.10"
+                  dst-start: "1.1.1.2"
+                  dst-end: "1.1.1.10"
+            id:     2
+            description: "tcp ack"
+            packet-size: 1024
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:92:51"     #VM - 2 mac address eth3
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]                # egress port id or list of ports [0, 1]
+            ingress_port: [0]               # ingress port id or list of ports [0, 1]
+            rate-mode: fixed                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "320000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+
+          - flow:   "1024-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "2.1.1.1"
+                  src-end: "2.1.1.10"
+                  dst-start: "4.1.1.2"
+                  dst-end: "4.1.1.10"
+            id:     3
+            description: "tcp ack"
+            packet-size: 1024
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"   # vm 1 eth 2 port
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]                # egress port id or list of ports [0, 1]
+            ingress_port: [0]               # ingress port id or list of ports [0, 1]
+            rate-mode: fixed                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "320000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+
+          - flow:   "1024-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "4.1.1.1"
+                  src-end: "4.1.1.10"
+                  dst-start: "2.1.1.2"
+                  dst-end: "2.1.1.10"
+            id:     4
+            description: "tcp ack"
+            packet-size: 1024
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:87:A5"     #VM - 2 mac address eth3
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: fixed               # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "325000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+
+          - flow:   "1024-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "1.1.1.1"
+                  src-end: "1.1.1.10"
+                  dst-start: "3.1.1.2"
+                  dst-end: "3.1.1.10"
+            id:     5
+            description: "latency flow"
+            packet-size: 1024
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"     # vm 1 eth 2 port
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]                # egress port id or list of ports [0, 1]
+            ingress_port: [0]               # ingress port id or list of ports [0, 1]
+            rate-mode: fixed                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: True
+
+          - flow:   "1024-byte-flow-l-r"
+            ranges:
+                - range: "two"
+                  src-start: "2.1.1.1"
+                  src-end: "2.1.1.10"
+                  dst-start: "4.1.1.2"
+                  dst-end: "4.1.1.10"
+            id:     6
+            description: "latency flow"
+            packet-size: 1024
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"   # vm 1 eth 2 port
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]                # egress port id or list of ports [0, 1]
+            ingress_port: [0]               # ingress port id or list of ports [0, 1]
+            rate-mode: fixed                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            stream-rate: "1000ppp"          # stream rate can either pps value or port percentage 10% or 1pps
+            latency: True
