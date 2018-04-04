@@ -73,14 +73,18 @@ import ssl
 import sys
 import os
 import yaml
+from dpdk_environment import setup_environment
+from dpdk_environment import teardown_environment
+
 from decimal import *
 import pprint
+
 try:
     import stl_path
     from trex_stl_lib.api import *
 except ImportError:
     print "trex not installed."
-    #raise ImportError('<any message you want here>')
+    # raise ImportError('<any message you want here>')
 
 from prettytable import PrettyTable
 import xlsxwriter
@@ -98,6 +102,20 @@ import re
 from operator import truediv
 import operator
 
+import logging
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+log_path = dir_path
+log_filename = "vmware"
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.FileHandler("{0}/{1}.log".format(log_path, log_filename)),
+        logging.StreamHandler()
+    ],
+    level=logging.INFO)
+
 
 class bcolors:
     """
@@ -113,12 +131,14 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-MPPS = 1000000.00                   # pps reference
-GPPS = 1000000000.00                # gpss reference
+MPPS = 1000000.00  # pps reference
+GPPS = 1000000000.00  # gpss reference
 
-RATE = 1000000000                   # bw reference
-L1_HDR_SIZE = 20                    # L1 header for example for 64 byte on the wire 84 byte.
-                                    # 64 byte L2 header + 20 byte L1.
+RATE = 1000000000  # bw reference
+L1_HDR_SIZE = 20  # L1 header for example for 64 byte on the wire 84 byte.
+
+
+# 64 byte L2 header + 20 byte L1.
 
 
 def maxpps(packet_size, percent, interface_rate):
@@ -136,34 +156,52 @@ def maxpps(packet_size, percent, interface_rate):
 
 def packet_dst_tostring(flow):
     """
+    Reads either destination start ip and destination end ip or single source ip address
+    from flow configuration section.
 
     :param flow:
     :return:
     """
-    if 'ranges' in flow:
-        ip_range = flow['ranges'][0]
-        return "{0} - {1}".format(ip_range['dst-start'], ip_range['dst-end'])
-    else:
-        return flow['dstip']
+    try:
+        # TODO parse list
+        if 'ranges' in flow:
+            ip_range = flow['ranges'][0]
+            return "{0} - {1}".format(ip_range['dst-start'], ip_range['dst-end'])
+        else:
+            return flow['dstip']
+    except KeyError as e:
+        print "Mandatory key not present. Check configuration yaml file."
+        print "".format(e)
+    except TypeError as e:
+        print "".format(e)
 
 
 def packet_src_tostring(flow):
     """
+    Reads either source start ip and source end ip or single source ip address
+    from flow configuration section.
 
     :param flow:
     :return:
     """
-
-    if 'ranges' in flow:
-        ip_range = flow['ranges'][0]
-        return "{0} - {1}".format(ip_range['src-start'], ip_range['src-end'])
-    else:
-        return flow['srcip']
+    # TODO parse list
+    try:
+        if 'ranges' in flow:
+            ip_range = flow['ranges'][0]
+            return "{0} - {1}".format(ip_range['src-start'], ip_range['src-end'])
+        else:
+            return flow['srcip']
+    except KeyError as e:
+        print "Mandatory key not present. Check configuration yaml file."
+        print "".format(e)
+    except TypeError as e:
+        print "".format(e)
 
 
 def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, payload_size=0):
     """
-    Function appends flow to flow table that used for console output.
+    Function appends single flow record to flow table. flow table used
+    used for console output.
 
     :param flow_table:    flow table used for console output
     :param flow:          test flow
@@ -180,21 +218,27 @@ def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, paylo
     else:
         flow_type = ""
 
-    # TODO move formated to configuration file
-    flow_table.add_row(["{:,}".format(flow_rate),
-                        flow['id'],
-                        flow_type,
-                        flow['srcmac'],
-                        flow['dstmac'],
-                        packet_src_tostring(flow),
-                        packet_dst_tostring(flow),
-                        flow['srcport'],
-                        flow['dstport'],
-                        flow['vlan'],
-                        header_size,
-                        payload_size,
-                        header_size + payload_size,
-                        flow['max-pps']])
+    try:
+        # TODO move formatted to configuration file
+        flow_table.add_row(["{:,}".format(flow_rate),
+                            flow['id'],
+                            flow_type,
+                            flow['srcmac'],
+                            flow['dstmac'],
+                            packet_src_tostring(flow),
+                            packet_dst_tostring(flow),
+                            flow['srcport'],
+                            flow['dstport'],
+                            flow['vlan'],
+                            header_size,
+                            payload_size,
+                            header_size + payload_size,
+                            flow['max-pps']])
+    except KeyError as e:
+        print "Mandatory key not present. Check configuration yaml file."
+        print "".format(e)
+    except TypeError:
+        print ""
 
 
 def generate_payload(length):
@@ -210,18 +254,22 @@ def generate_payload(length):
     return word
 
 
-def save_as_cvs_report(test_result=None, result_filename=None, passed_only=False, stats_filter=None):
+def save_as_cvs_report(test_result=None, result_filename=None, passed_only=False, stats_filter=None, verbose=False):
     """
 
     Create cvs report for test and saves to a file.
+    The value populated based on stats filter dict.
 
     :param test_result:  test_result must hold a result for test
     :param result_filename: a valid path to a file
     :param passed_only: indicate to generate report only for a flow that passed test.
     :param stats_filter indicate what values client wish to save to a file.
+    :param
     :return: nothing
     """
-    print "Saving result to a file {0}".format(result_filename)
+    if verbose is True:
+        print "Saving result to a file {0}".format(result_filename)
+
     result_file = open(result_filename, "a")
 
     #  keys - rx_bps, latency_min, rx_pps, jitter, ingress_port, latency_max, port_tx,
@@ -235,33 +283,52 @@ def save_as_cvs_report(test_result=None, result_filename=None, passed_only=False
     if 'flow_status' not in _filter:
         _filter.append('flow_status')
 
-    for test_case in test_result:
-        filtered_dict = {k: v for k, v in test_case.items() if k in _filter}
-        for index, key in enumerate(_filter):
-            if (passed_only is True and 'Pass' in filtered_dict['flow_status']) or passed_only is False:
-                if key in filtered_dict:
-                    result_file.write('{0}'.format(filtered_dict[key]))
-                    if index != len(_filter) - 1:
-                        result_file.write(',')
-                result_file.write('\n')
+    try:
+        for test_case in test_result:
+            filtered_dict = {k: v for k, v in test_case.items() if k in _filter}
+            for index, key in enumerate(_filter):
+                if (passed_only is True and 'Pass' in filtered_dict['flow_status']) or passed_only is False:
+                    if key in filtered_dict:
+                        result_file.write('{0}'.format(filtered_dict[key]))
+                        if index != len(_filter) - 1:
+                            result_file.write(',')
+                    result_file.write('\n')
+    except KeyError as e:
+        print "Mandatory key not present. Check configuration yaml file."
+        print "".format(e)
+    except TypeError:
+        print ""
+    except IOError as e:
+        print "IO error"
+        print "".format(e)
 
     result_file.write("\n")
     result_file.close()
 
 
-def save_as_excel_report(test_result=None, result_filename=None, passed_only=False):
+def save_as_excel_report(test_result=None, result_filename=None, passed_only=False, stats_filter=None, verbose=False):
     """
 
-    Function generates a excel report and saves a result to a provided file name
+    Function generates an excel report and saves a result to a provided file name
 
     :param test_result: list of dict that contains test result data
     :param result_filename: excel file name.
     :param passed_only: indicate to generate report only for a flow that passed test.
-    :return:
+    :param stats_filter
+    :param verbose
+    :return: True otherwise False ( can't create fail / key error etc)
     """
 
-    workbook = xlsxwriter.Workbook(result_filename)
-    worksheet = workbook.add_worksheet()
+    if verbose is True:
+        print "Saving result to a excel file {0}".format(result_filename)
+
+    try:
+            workbook = xlsxwriter.Workbook(result_filename)
+            worksheet = workbook.add_worksheet()
+    except IOError as e:
+        print "IO error"
+        print "".format(e)
+        return False
 
     # headings
     headings = ['iteration', 'flow id', 'packet size (byte)', 'avg lost (pkt)', 'flow pkt-tx', 'flow pkt-rx',
@@ -277,40 +344,61 @@ def save_as_excel_report(test_result=None, result_filename=None, passed_only=Fal
 
     worksheet.write_row('A1', headings, bold)
 
-    newlist = sorted(test_result, key=lambda k: (k['iteration'], k['flow_id']))
+    # by default we sort by iteration and flow_id
+    sorted_test_result = sorted(test_result, key=lambda k: (k['iteration'], k['flow_id']))
     cell_format = workbook.add_format({'font_size': 14, 'align': 'center'})
-
     cell_format2 = workbook.add_format({'font_size': 14, 'align': 'center'})
     cell_format3 = workbook.add_format({'font_size': 14, 'align': 'center'})
     cell_format2.set_num_format('#,##0')
     cell_format3.set_num_format('0.000')
 
-    for flow_record in newlist:
-        if 'flow_status' in flow_record:
-            if (passed_only is True and 'Pass' in flow_record['flow_status']) or passed_only is False:
-                # set row format
-                worksheet.set_row(row, None, cell_format)
-                worksheet.write_number(row, col, flow_record['iteration'])
-                worksheet.write_number(row, col + 1, flow_record['flow_id'])
-                worksheet.write_number(row, col + 2, flow_record['packet_size'], )
-                worksheet.write(row, col + 3, flow_record['average_lost'],cell_format3)
-                worksheet.write_number(row, col + 4, flow_record['port_rx'], cell_format2)
-                worksheet.write_number(row, col + 5, flow_record['port_tx'], cell_format2)
-                worksheet.write(row, col + 6, flow_record['flow_status'])
-                worksheet.write_string(row, col + 7, ",".join(flow_record['ingress_port']))
-                worksheet.write_string(row, col + 8, ",".join(flow_record['egress_port']))
-                worksheet.write_number(row, col + 9, flow_record['tx_pps'], cell_format2)
-                worksheet.write_number(row, col + 10, flow_record['rx_pps'], cell_format2)
-                worksheet.write_number(row, col + 11, flow_record['tx_bps'])
-                worksheet.write_number(row, col + 12, flow_record['rx_bps'])
-                worksheet.write_number(row, col + 13, flow_record['latency_min'])
-                worksheet.write_number(row, col + 14, flow_record['latency_max'])
-                worksheet.write_number(row, col + 15, flow_record['latency_avg'],cell_format3)
-                worksheet.write_number(row, col + 16, flow_record['jitter'])
-                worksheet.write_number(row, col + 17, flow_record['rx_pps'] + flow_record['rx_pps'], cell_format2)
-                row += 1
+    if stats_filter is None or len(stats_filter) == 0:
+        # default dict_ filter includes all keys
+        _filter = ['iteration', 'flow_id', 'packet_size', 'average_lost',
+                   'port_rx', 'port_tx', 'flow_status', 'ingress_port', 'egress_port',
+                   'tx_pps', 'rx_pps' 'tx_bps', 'rx_bps', 'latency_min',
+                   'latency_max', 'latency_avg', 'jitter']
+    else:
+        _filter = stats_filter
+
+    # we always append flow status
+    if 'flow_status' not in _filter:
+        _filter.append('flow_status')
+
+    try:
+        for flow_record in sorted_test_result:
+            if 'flow_status' in flow_record:
+                if (passed_only is True and 'Pass' in flow_record['flow_status']) or passed_only is False:
+                    # set row format
+                    worksheet.set_row(row, None, cell_format)
+                    worksheet.write_number(row, col, flow_record['iteration'])
+                    worksheet.write_number(row, col + 1, flow_record['flow_id'])
+                    worksheet.write_number(row, col + 2, flow_record['packet_size'], )
+                    worksheet.write(row, col + 3, flow_record['average_lost'], cell_format3)
+                    worksheet.write_number(row, col + 4, flow_record['port_rx'], cell_format2)
+                    worksheet.write_number(row, col + 5, flow_record['port_tx'], cell_format2)
+                    worksheet.write(row, col + 6, flow_record['flow_status'])
+                    worksheet.write_string(row, col + 7, ",".join(flow_record['ingress_port']))
+                    worksheet.write_string(row, col + 8, ",".join(flow_record['egress_port']))
+                    worksheet.write_number(row, col + 9, flow_record['tx_pps'], cell_format2)
+                    worksheet.write_number(row, col + 10, flow_record['rx_pps'], cell_format2)
+                    worksheet.write_number(row, col + 11, flow_record['tx_bps'])
+                    worksheet.write_number(row, col + 12, flow_record['rx_bps'])
+                    worksheet.write_number(row, col + 13, flow_record['latency_min'])
+                    worksheet.write_number(row, col + 14, flow_record['latency_max'])
+                    worksheet.write_number(row, col + 15, flow_record['latency_avg'], cell_format3)
+                    worksheet.write_number(row, col + 16, flow_record['jitter'])
+                    worksheet.write_number(row, col + 17, flow_record['rx_pps'] + flow_record['rx_pps'], cell_format2)
+                    row += 1
+    #
+    except TypeError:
+        print ""
+    except KeyError as e:
+        print "undefined key"
 
     workbook.close()
+
+    return True
 
 
 def get_flowbyid(flow_table=None, flow_id=0):
@@ -370,8 +458,10 @@ def console_report(console_output_tlb=None, generic_stats_tlb=None):
                                  test_run['jitter'],
                                  test_run['aggregate_pps']]
             console_output_tlb.add_row(test_result_entry)
-    except TypeError:
-           print "Can't build console output"
+    except TypeError as e:
+        print "Can't build console output."
+        print "".format(e)
+
 
 def get_latency_stats(stats, flow_id):
     """
@@ -388,18 +478,26 @@ def get_latency_stats(stats, flow_id):
     latency_avg_flt = 0
     jitter_flt = 0
 
-    if 'latency' in stats:
-        latency_stats = stats['latency']
-        if flow_id in latency_stats:
-            latency_stat = latency_stats[flow_id]['latency']
-            if 'jitter' in latency_stat:
-                jitter_flt = latency_stat['jitter']
-            if 'total_min' in latency_stat:
-                latency_min_flt = latency_stat['total_min']
-            if 'total_max' in latency_stat:
-                latency_max_flt = latency_stat['total_max']
-            if 'average' in latency_stat:
-                latency_avg_flt = latency_stat['average']
+    try:
+        if 'latency' in stats:
+            latency_stats = stats['latency']
+            if flow_id in latency_stats:
+                latency_stat = latency_stats[flow_id]['latency']
+                if 'jitter' in latency_stat:
+                    jitter_flt = latency_stat['jitter']
+                if 'total_min' in latency_stat:
+                    latency_min_flt = latency_stat['total_min']
+                if 'total_max' in latency_stat:
+                    latency_max_flt = latency_stat['total_max']
+                if 'average' in latency_stat:
+                    latency_avg_flt = latency_stat['average']
+
+    except TypeError as e:
+        print ""
+        print "".format(e)
+    except KeyError as e:
+        print ""
+        print "".format(e)
 
     return {'latency_min': latency_min_flt, 'latency_max': latency_max_flt,
             'latency_avg': latency_avg_flt, 'jitter': jitter_flt}
@@ -408,7 +506,7 @@ def get_latency_stats(stats, flow_id):
 def get_total_stats(stats):
     """
 
-    Return total flow statics if present from stats dict
+    Returns total flow statics if present from stats dict
 
     :param stats:
     :return:
@@ -423,18 +521,25 @@ def get_total_stats(stats):
     l1_rx_bps = 0
     l1_tx_bbs = 0
 
-    if 'total' in stats:
-        total_stats = stats['total']
-        tx_pps_dec = Decimal(total_stats['tx_pps'])
-        rx_pps_dec = Decimal(total_stats['rx_pps'])
-        tx_pps = round(tx_pps_dec, 0)
-        rx_pps = round(rx_pps_dec, 0)
-        tx_bps = truediv(float(total_stats['tx_bps']), GPPS)
-        rx_bps = truediv(float(total_stats['rx_bps']), GPPS)
-        ierrors = total_stats['ierrors']
-        oerrors = total_stats['oerrors']
-        l1_rx_bps = total_stats['rx_bps_L1']
-        l1_tx_bbs = total_stats['tx_bps_L1']
+    try:
+        if 'total' in stats:
+            total_stats = stats['total']
+            tx_pps_dec = Decimal(total_stats['tx_pps'])
+            rx_pps_dec = Decimal(total_stats['rx_pps'])
+            tx_pps = round(tx_pps_dec, 0)
+            rx_pps = round(rx_pps_dec, 0)
+            tx_bps = truediv(float(total_stats['tx_bps']), GPPS)
+            rx_bps = truediv(float(total_stats['rx_bps']), GPPS)
+            ierrors = total_stats['ierrors']
+            oerrors = total_stats['oerrors']
+            l1_rx_bps = total_stats['rx_bps_L1']
+            l1_tx_bbs = total_stats['tx_bps_L1']
+
+    except TypeError:
+        print ""
+    except KeyError as e:
+        print ""
+        print "".format(e)
 
     return {'tx_pps': tx_pps, 'rx_pps': rx_pps,
             'tx_bps': tx_bps, 'rx_bps': rx_bps,
@@ -488,18 +593,29 @@ def append_flow_result(test_results=None, generic_table=None):
 
 
 def calculate_lost(tx, rx):
+    """
+    Returns frame lost percentage.
+
+    :param tx: number of frame send
+    :param rx: number of frame received
+    :return: percentage of lost.
+    """
     if rx == 0 or tx == 0:
         return 100
-    print " tx {0} rx {1} loss {2}".format(tx, rx, (abs((tx - rx) / rx * 100)))
-    return abs((tx - rx) / rx * 100)
+
+    frame_lost = abs((tx - rx) / rx * 100)
+#    print " tx {0} rx {1} loss {2}".format(frame_lost)
+    return frame_lost
 
 
-def run(stlclient, stream_list, test_plan, verbose=False):
+def run(stlclient, stream_list, test_scenario, verbose=False):
     """
+    Function takes list of stream list and runs all in one shoot.
+    The length of a test dictated by max-duration for entire test scenario.
 
     :param stlclient:   connection to a tester
-    :param stream_list: list of streams that part of single test
-    :param test_plan:   test plan
+    :param stream_list: list of streams that part of single test scenario
+    :param test_scenario:  test plan
     :param verbose
     :return:
     """
@@ -513,6 +629,7 @@ def run(stlclient, stream_list, test_plan, verbose=False):
     aggregate_rate = 0
 
     for stream in stream_list:
+        # append all egress ports to a list and ingress port
         egress_ports += stream['egress_port']
         ingress_ports += stream['ingress_port']
         aggregate_rate += stream['rate']
@@ -525,11 +642,8 @@ def run(stlclient, stream_list, test_plan, verbose=False):
     all_ports = list(ingress_ports)
     all_ports.extend(port for port in egress_ports if port not in all_ports)
 
-    # target_pps = "{0}pps".format(aggregate_rate)
-    # print "Aggregate pps for all flow for a test {:,} pps".format(aggregate_rate)
-
     # stlclient.start(ports=ingress_ports, mult=target_pps, duration=test_plan['max-duration'])
-    stlclient.start(ports=ingress_ports, duration=test_plan['max-duration'])
+    stlclient.start(ports=ingress_ports, duration=test_scenario['max-duration'])
     stlclient.wait_on_traffic(ports=all_ports, timeout=2400)
 
     # read the stats after the test
@@ -547,86 +661,87 @@ def run(stlclient, stream_list, test_plan, verbose=False):
         print "{0}Port tx {1} pkt flow rx {2} pkt {3} diff {4}".format(bcolors.OKGREEN,
                                                                        stats[0]["opackets"],
                                                                        stats[0]["ipackets"],
-                                                                       stats[0]["opackets"] -  stats[0]["ipackets"],
+                                                                       stats[0]["opackets"] - stats[0]["ipackets"],
                                                                        bcolors.ENDC)
-
     is_all_pass = True
     per_flow_stats = []
     flow_list = pgid_stats['flow_stats']
     aggregate_lost = 0
     aggregate_overflow = 0
     for flow_id in flow_list:
-        if str(flow_id).isdigit():
-            # note we get packet from total
-            tx_pkts = flow_list[flow_id]['tx_pkts']['total']
-            rx_pkts = flow_list[flow_id]['rx_pkts']['total']
+        if not str(flow_id).isdigit():
+            continue
 
-            port_tx = float(flow_list[flow_id]['tx_pkts']['total'])
-            port_rx = float(flow_list[flow_id]['rx_pkts']['total'])
+        #  we get packet  total for each respected flow
+        tx_pkts = flow_list[flow_id]['tx_pkts']['total']
+        rx_pkts = flow_list[flow_id]['rx_pkts']['total']
+        port_tx = float(flow_list[flow_id]['tx_pkts']['total'])
+        port_rx = float(flow_list[flow_id]['rx_pkts']['total'])
+        # lost a and b
+        lost_a = tx_pkts - rx_pkts
+        lost_b = rx_pkts - tx_pkts
 
-            lost_a = tx_pkts - rx_pkts
-            lost_b = rx_pkts - tx_pkts
+        is_passed = False
 
-            is_passed = False
+        if verbose is True:
+            print "{0}flow tx {1} pkt flow rx {2} pkt, diff {3} pkt {4}".format(bcolors.OKGREEN,
+                                                                                tx_pkts,
+                                                                                rx_pkts,
+                                                                                tx_pkts - rx_pkts,
+                                                                                bcolors.ENDC)
+        if rx_pkts == 0:
+            print "{0}100% lost detected {1}".format(bcolors.FAIL, bcolors.ENDC)
+            avg_loss_rate = 100
+        elif lost_a == lost_b:
+            if verbose is True:
+                print "{0}No lost detected {1}".format(bcolors.OKGREEN, bcolors.ENDC)
+            is_passed = True
+            avg_loss_rate = 0
+        else:
+            # case one rx > tx
+            if port_rx > port_tx:
+                # if we received more than we send we need check for how much
+                # more and if in acceptable range we don't care.
+                rx_overflow = calculate_lost(port_rx, port_tx)
+                packet_lost = 0
+                if verbose is True:
+                    print "{0}Checking for potential rx overflow. rx overflow {1}%" \
+                          "{2}".format(bcolors.FAIL, rx_overflow, bcolors.ENDC)
+                    if rx_overflow > test_scenario['acceptable-rx-overflow']:
+                        print "{0}Error: Potential duplicate packets. " \
+                              "Check tester configuration.".format(bcolors.FAIL, bcolors.ENDC)
+            # case one tx > rx
+            else:
+                if verbose is True:
+                    print "{0}Calculating lost {1}".format(bcolors.FAIL, bcolors.ENDC)
+                # check how much we lost
+                packet_lost = calculate_lost(port_tx, port_rx)
+                print "{0}Lost {1} lost {2}".format(bcolors.FAIL, packet_lost, bcolors.ENDC)
+                rx_overflow = 0
+
+            avg_loss_rate = packet_lost
+            aggregate_lost = aggregate_lost + avg_loss_rate
+            aggregate_overflow = aggregate_overflow + rx_overflow
 
             if verbose is True:
-                print "{0}flow tx {1} pkt flow rx {2} pkt, diff {3} pkt {4}".format(bcolors.OKGREEN,
-                                                                               tx_pkts,
-                                                                               rx_pkts,
-                                                                               tx_pkts - rx_pkts,
-                                                                               bcolors.ENDC)
-            if rx_pkts == 0:
-                print "{0}100% lost detected {1}".format(bcolors.FAIL, bcolors.ENDC)
-                avg_loss_rate = 100
-            elif lost_a == lost_b:
+                print "{0}Average lost {1} {2}".format(bcolors.FAIL, avg_loss_rate, bcolors.ENDC)
+
+            # check that we have lost in acceptable range
+            if Decimal(avg_loss_rate) <= Decimal(test_scenario['acceptable-loss']) \
+                    and Decimal(rx_overflow) <= Decimal(test_scenario['acceptable-rx-overflow']):
                 if verbose is True:
-                    print "{0}No lost detected {1}".format(bcolors.OKGREEN,  bcolors.ENDC)
+                    print "{0}Passed test with average lost {1} and " \
+                          "rx overflow {2} {3}".format(bcolors.OKGREEN, avg_loss_rate, rx_overflow, bcolors.ENDC)
                 is_passed = True
-                avg_loss_rate = 0
             else:
-                # case one rx > tx
-                if port_rx > port_tx:
-                    # if we received more than we send we need check for how much
-                    # more and if in acceptable range we don't care.
-                    rx_overflow = calculate_lost(port_rx, port_tx)
-                    packet_lost = 0
-                    if verbose is True:
-                        print "{0}Checking for potential rx overflow. rx overflow {1}%" \
-                              "{2}".format(bcolors.FAIL, rx_overflow, bcolors.ENDC)
-                        if rx_overflow > test_plan['acceptable-rx-overflow']:
-                            print "{0}Error: Potential duplicate packets. " \
-                                  "Check tester configuration.".format(bcolors.FAIL, bcolors.ENDC)
-                # case one tx > rx
-                else:
-                    if verbose is True:
-                        print "{0}Calculating lost {1}".format(bcolors.FAIL, bcolors.ENDC)
-                    # check how much we lost
-                    packet_lost = calculate_lost(port_tx, port_rx)
-                    print "{0}Lost {1} lost {2}".format(bcolors.FAIL, packet_lost, bcolors.ENDC)
-                    rx_overflow = 0
+                # if at least one flow passed than all flow failed.
+                is_all_pass = False
 
-                avg_loss_rate = packet_lost
-                aggregate_lost = aggregate_lost + avg_loss_rate
-                aggregate_overflow = aggregate_overflow + rx_overflow
-
-                if verbose is True:
-                    print "{0}Average lost {1} {2}".format(bcolors.FAIL, avg_loss_rate, bcolors.ENDC)
-
-                if Decimal(avg_loss_rate) <= Decimal(test_plan['acceptable-loss']) \
-                        and Decimal(rx_overflow) <= Decimal(test_plan['acceptable-rx-overflow']):
-                    if verbose is True:
-                        print "{0}Passed test with average lost {1} and " \
-                              "rx overflow {2} {3}".format(bcolors.OKGREEN, avg_loss_rate, rx_overflow, bcolors.ENDC)
-                    is_passed = True
-                else:
-                    # if at least one flow passed than all flow failed.
-                    is_all_pass = False
-
-            # calculate we passed or not and average lost for each flow
-            flow_stats_record = {"flow_id": flow_id, "port_tx": tx_pkts, "port_rx": rx_pkts,
-                                 "status": is_passed, "average_lost": avg_loss_rate,
-                                 "ingres_ports": set(ingress_ports), "egress_ports": set(egress_ports)}
-            per_flow_stats.append(flow_stats_record)
+        # calculate we passed or not and average lost for each flow
+        flow_stats_record = {"flow_id": flow_id, "port_tx": tx_pkts, "port_rx": rx_pkts,
+                             "status": is_passed, "average_lost": avg_loss_rate,
+                             "ingres_ports": set(ingress_ports), "egress_ports": set(egress_ports)}
+        per_flow_stats.append(flow_stats_record)
 
     # pack result
     flow_stats_dict = {'stats': stats,
@@ -666,7 +781,6 @@ def run_streams(stlclient, stream_dict=None, test_scenario=None, flow_table=None
     aggregate_pps = 0
     for stream in stream_list:
         aggregate_pps = aggregate_pps + stream['rate']
-
     stream_result['aggregate_pps'] = aggregate_pps
 
     # if all flow passed
@@ -728,7 +842,8 @@ def validate_scenario(flow=None, test_plan=None):
                         "acceptable-loss",
                         "adaptive",
                         "port_bw",
-                        "test-type"]
+                        "test-type",
+                        "acceptable-rx-overflow"]
 
     flow_fields = ["id", "srcmac", "rate-mode", "dstmac", "egress_port", "ingress_port"]
 
@@ -910,7 +1025,7 @@ def calculate_rate(test_scenario=None, flow=None, packet_size=512, verbose=False
 #
 #     return STLPktBuilder(pkt=pkt_base / pkt_pyld, vm=vm)
 
-#build_frame(flow=flow):
+# build_frame(flow=flow):
 
 
 def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rate=None, verbose=False):
@@ -956,16 +1071,16 @@ def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rat
         ]
 
         pkt_base = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
-                Dot1Q(vlan=flow['vlan']) / \
-                IP() / \
-                UDP(dport=flow['srcport'], sport=flow['dstport'])
+                   Dot1Q(vlan=flow['vlan']) / \
+                   IP() / \
+                   UDP(dport=flow['srcport'], sport=flow['dstport'])
 
         pyld_size = packet_size - len(pkt_base)
         pkt_pyld = generate_payload(pyld_size)
         pad = pkt_pyld
         gen_packet = STLPktBuilder(pkt=pkt_base / pkt_pyld, vm=vm)
-        #print packet.to_json()
-        #return
+        # print packet.to_json()
+        # return
         frame = pkt_base
     else:
         frame = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
@@ -990,7 +1105,7 @@ def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rat
                                                             len(pad),
                                                             len(frame) + 4,
                                                             len(pad) + len(frame))
-    #print gen_packet.get_vm_data()
+    # print gen_packet.get_vm_data()
     # print "Calculated rate {0} pps".format(calculated_rate)
     if 'latency' in flow and flow['latency'] is True:
         stream = STLStream(name="{0} - flow {1}".format(test_plan['name'], flow_id),
@@ -1205,131 +1320,230 @@ def print_max_pps(pkt_sizes=None, percents=None, pps_output_tlb=None, doprint=Tr
         print(pps_output_tlb)
 
 
-def fix_packet_size_test(test_plan=None, generic_stats_tlb=None, console_output_tlb=None, verbose=False):
+def fixed_packet_size_test(test_scenario=None, generic_stats_tlb=None, console_output_tlb=None, verbose=False):
     """
+    Fixed packet size iteration test handle a test scenario where we have list of packet size and respected
+    percentage from reference bandwidth.
 
-    :param test_plan:
-    :param generic_stats_tlb:
-    :param console_output_tlb:
+    :param test_scenario: configuration dict for entire scenario.
+    :param generic_stats_tlb: table used for test result stats report
+    :param console_output_tlb: table for flow console output
     :param verbose
     :return:
     """
 
-    if 'packet-size' not in test_plan:
-        print "{0}Error: \'{1}\' is mandatory field for fixed size packet iteration " \
-              "test. {2}".format(bcolors.FAIL, 'packet-size', bcolors.ENDC)
-        return False
+    try:
+        if 'packet-size' not in test_scenario:
+            print "{0}Error: \'{1}\' is mandatory field for fixed size packet iteration " \
+                  "test. {2}".format(bcolors.FAIL, 'packet-size', bcolors.ENDC)
+            return False
 
-    for pkt_size in test_plan['packet-size']:
+        for pkt_size in test_scenario['packet-size']:
 
-        # print max pps for a given packet size
-        packet_sizes = [pkt_size['size']]
-        print_max_pps(pkt_sizes=packet_sizes,  percents=[100])
+            # print max pps for a given packet size
+            packet_sizes = [pkt_size['size']]
+            print_max_pps(pkt_sizes=packet_sizes, percents=[100])
 
-        print "{0}Executing test \"{1}\".{2}".format(bcolors.OKGREEN, test_plan['name'], bcolors.ENDC)
+            print "{0}Executing test \"{1}\".{2}".format(bcolors.OKGREEN, test_scenario['name'], bcolors.ENDC)
 
-        # run test scenario
-        # TODO packet pkt and throttle
-        throttle = 0
-        if 'throttle' in pkt_size:
-            throttle = pkt_size['throttle']
-        generic_stats_tlb = tester(frame_size=pkt_size['size'],
-                                   throttle=throttle,
-                                   test_scenario=test_plan,
-                                   generic_stats_tlb=generic_stats_tlb,
-                                   verbose=verbose)
-        # populate console report table
-        console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
+            # run test scenario
+            # TODO packet pkt and throttle
+            throttle = 0
+            if 'throttle' in pkt_size:
+                throttle = pkt_size['throttle']
+            generic_stats_tlb = tester(frame_size=pkt_size['size'],
+                                       throttle=throttle,
+                                       test_scenario=test_scenario,
+                                       generic_stats_tlb=generic_stats_tlb,
+                                       verbose=verbose)
+            # populate console report table
+            console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
+    except KeyError as e:
+        print "{0} Invalid key. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "".format(e)
+    except TypeError as e:
+        print "{0} Invalid type. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "".format(e)
 
     return True
 
 
-def imix_iteration_test(test_plan=None, generic_stats_tlb=None, console_output_tlb=None, verbose=False):
+def imix_iteration_test(test_scenario=None, generic_stats_tlb=None, console_output_tlb=None, verbose=False):
     """
+    IMIX iteration test handle test case where we have set ot flow with variable packet size each
+    and percentage from a reference bandwidth.
 
-    :param test_plan:
-    :param generic_stats_tlb:
-    :param console_output_tlb:
+    The percentage will be used to calcualte target pps values for a flow.
+
+    Example:
+       port_bw:  1000                    # port bandwidth
+       ....
+          - flow:   "128-byte-flow"
+            decription: "single flow 128 byte 6% percent"
+            id:     1
+            packet-size: 128
+            description: "voice"
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcip:  1.1.1.1
+            dstip:  2.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate
+                                           #from reference bandwidth a percentage
+
+            percent: 6                     # 50 percent in one direction relevant only if rate-mode auto
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+    :param test_scenario: configuration dict for entire scenario.
+    :param generic_stats_tlb: table used for test result stats report
+    :param console_output_tlb: table for flow console output
     :param verbose=False
     :return:
     """
 
-    print "{0} Executing test \"{1}\"" \
-          "all by supplying argument all.{2}".format(bcolors.OKGREEN, test_plan['name'], bcolors.ENDC)
+    if verbose is True:
+        print "{0} Executing test \"{1}\"" \
+              "all by supplying argument all.{2}".format(bcolors.OKGREEN, test_scenario['name'], bcolors.ENDC)
 
     pps_output_tlb = PrettyTable(["Packet size", "Line rate 10Gbe", "Line rate 40Gbe", "Percentage"])
 
-    for flow in test_plan['flows']:
-        if 'packet-size' not in flow:
-            print "{0}Error in test {1}: \'{2}\' is mandatory field for this " \
-                  "test. {3}".format(bcolors.FAIL, test_plan['name'], 'packet-size', bcolors.ENDC)
-            return
-        print flow['stream-rate']
+    try:
+        for flow in test_scenario['flows']:
+            if 'packet-size' not in flow:
+                print "{0}Error in test {1}: \'{2}\' is mandatory field for this " \
+                      "type of a test. {3}".format(bcolors.FAIL, test_scenario['name'], 'packet-size', bcolors.ENDC)
+                return
+            print flow['stream-rate']
 
-        if 'percent' not in flow and 'stream-rate' not in flow:
-            print "{0}Error in test {1}: \'{2}\' is mandatory field for this " \
-                  "test. {3}".format(bcolors.FAIL, test_plan['name'], 'percent or stream-rate', bcolors.ENDC)
-            return
+            if 'percent' not in flow and 'stream-rate' not in flow:
+                print "{0}Error in test {1}: \'{2}\' is mandatory field for this type of " \
+                      "a test. {3}".format(bcolors.FAIL, test_scenario['name'], 'percent or stream-rate', bcolors.ENDC)
+                return
 
-        packet_sizes = [flow['packet-size']]
-        if 'percent' in flow:
-            distribution = [flow['percent']]
+            packet_sizes = [flow['packet-size']]
+            if 'percent' in flow:
+                distribution = [flow['percent']]
+            else:
+                distribution = [100]
+
+            print_max_pps(pkt_sizes=packet_sizes,
+                          percents=distribution,
+                          pps_output_tlb=pps_output_tlb, doprint=False)
+        # output pps table
+        print pps_output_tlb
+
+        generic_stats_tlb = tester(test_scenario=test_scenario,
+                                   generic_stats_tlb=generic_stats_tlb,
+                                   verbose=verbose)
+        if generic_stats_tlb is False:
+            print "{0}Failed execute a test scenario: {1}: {2}".format(bcolors.FAIL,
+                                                                       test_scenario['name'],
+                                                                       bcolors.ENDC)
+            return False
         else:
-            distribution = [100]
+            # generate console report
+            console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
 
-        print_max_pps(pkt_sizes=packet_sizes,
-                      percents=distribution,
-                      pps_output_tlb=pps_output_tlb, doprint=False)
-
-    # output pps table
-    print pps_output_tlb
-
-    generic_stats_tlb = tester(test_scenario=test_plan,
-                               generic_stats_tlb=generic_stats_tlb,
-                               verbose=verbose)
-    if generic_stats_tlb is False:
-        print " wrong "
-    # populate console report table
-    console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
+    except KeyError as e:
+        print "{0} Invalid key. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "".format(e)
+    except TypeError as e:
+        print "{0} Invalid type. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "".format(e)
 
 
-def main(execute=None, verbose=True):
+def read_test_scenarios(config=None):
+    """
+    Read configuration yaml files and populate and return a dict.
+
+    :param config:
+    :return: returns populated dict with scenarios.
+             each dict contains scenario name as key,  string that represents a path for environment
+             and scenario itself as key value pair.
+    """
+    test_scenarios = {[]}
+    if 'tester' not in config:
+        return test_scenarios
+
+    try:
+        for test_description in config['tester']:
+            test_name = test_description['name']
+            if test_name is None or len(test_name) is 0:
+                continue
+            if 'test-environment' in test_description:
+                test_environment = test_description['test-environment']
+            else:
+                test_environment = None
+
+            logging.info("Reading {0}".format(test_description['test-scenario']))
+            scenario_config = yaml.load(open(test_description['test-scenario']))
+            if scenario_config is None or 'scenario' not in scenario_config:
+                print "{0}Error: each test plan must have at least one test. {1}".format(bcolors.FAIL, bcolors.ENDC)
+                return test_scenarios
+
+            test_construct = {'test_environment': test_environment, 'scenario': scenario_config}
+            test_scenarios[test_name] = test_construct
+
+    except IOError as e:
+        print "{0}Error opening file {1} {2}".format(bcolors.FAIL,
+                                                     test_description['test-scenario'],
+                                                     bcolors.ENDC)
+        print e.message
+    except yaml.parser.ParserError as e:
+        print "Error opening file syntax error in yaml file.".format(bcolors.FAIL,
+                                                                     test_description['test-scenario'],
+                                                                     bcolors.ENDC)
+        print e.message
+
+    return test_scenarios
+
+
+def execute_scenario(execute=None, test_scenarios=None, test_environment=None, verbose=False):
     """
 
     :param execute:
-    :param verbose:
+    :param test_scenarios:
+    :param test_environment:
+    :param verbose
     :return:
     """
-    print "Reading default configuration file {0}".format("tester-config.yaml")
-    config = yaml.load(open("tester-config.yaml"))
 
-    for test_description in config['tester']:
-        print "Opening {0}".format(test_description['test-scenario'])
-        scenario = yaml.load(open(test_description['test-scenario']))
-        for test_plan in scenario['scenario']:
+    if test_environment is not None and len(test_environment) > 0:
+        setup_environment(test_environment)
 
+    try:
+        scenarios = test_scenarios['scenario']
+        for test_plan in scenarios:
+            logging.info("Executing test scenario {0}".format(test_plan['name']))
             generic_stats_tlb = []
             console_output_tlb = create_result_table()
 
             if execute in test_plan['name'] or 'all' in execute:
-                if 'flows' in test_plan:
-                    if 'test-type' in test_plan and 'packet-iteration' in test_plan['test-type']:
-                        fix_packet_size_test(test_plan=test_plan,
-                                             generic_stats_tlb=generic_stats_tlb,
-                                             console_output_tlb=console_output_tlb,
-                                             verbose=verbose)
+                if 'flows' not in test_plan:
+                    continue
+            if 'test-type' in test_plan and 'packet-iteration' in test_plan['test-type']:
+                fixed_packet_size_test(test_scenario=test_plan,
+                                       generic_stats_tlb=generic_stats_tlb,
+                                       console_output_tlb=console_output_tlb,
+                                       verbose=verbose)
 
-                    if 'test-type' in test_plan and 'imix-iteration' in test_plan['test-type']:
-                        imix_iteration_test(test_plan=test_plan,
-                                            generic_stats_tlb=generic_stats_tlb,
-                                            console_output_tlb=console_output_tlb,
-                                            verbose=verbose)
+            if 'test-type' in test_plan and 'imix-iteration' in test_plan['test-type']:
+                imix_iteration_test(test_scenario=test_plan,
+                                    generic_stats_tlb=generic_stats_tlb,
+                                    console_output_tlb=console_output_tlb,
+                                    verbose=verbose)
 
-            # output result to console and save file
+            #output result to console and save to a file.
             if len(generic_stats_tlb) > 0:
                 sys.stdout.write("\r")
                 sys.stdout.flush()
                 print "{0}Stream result: {1}".format(bcolors.OKGREEN, bcolors.ENDC)
+                logging.info("{0}Stream result: {1}".format(bcolors.OKGREEN, bcolors.ENDC))
                 output_result_table(result_table=console_output_tlb)
                 if 'test-result' in test_plan and 'cvs' in test_plan['test-result-format']:
                     file_name = test_plan['test-result'] + ".cvs"
@@ -1342,9 +1556,43 @@ def main(execute=None, verbose=True):
                     save_as_excel_report(test_result=generic_stats_tlb,
                                          result_filename=file_name,
                                          passed_only=True)
+    except KeyError as e:
+        print "key error".format(e)
+
+    # stop entire environment only if we bootstraped anything
+    if test_environment is not None and len(test_environment) > 0:
+        teardown_environment(test_environment)
+
+
+def main(execute=None, verbose=True, config_file=None):
+    """
+    Main entry for ens tester.
+
+    :param execute:
+    :param verbose:
+    :param config_file:
+    :return:
+    """
+    if verbose is True:
+        print "Reading default configuration file {0}".format("tester-config.yaml")
+
+    if config_file is None or len(config_file) is 0:
+        logging.info("Reading default configuration file {0}".format("tester-config.yaml"))
+        config = yaml.load(open("tester-config.yaml"))
+    else:
+        logging.info("Reading default configuration file {0}".format(config_file))
+        config = yaml.load(config_file)
+
+    test_scenarios = read_test_scenarios(config)
+    for key, value in test_scenarios.iteritems():
+        test_environment=value['test_environment']
+        test_scenarios=value['scenario']
+        execute_scenario(execute=execute, test_scenarios=test_scenarios, test_environment=test_environment)
 
 
 if __name__ == "__main__":
+    """
+    """
     if len(sys.argv) < 2:
         print "{0}Error: Please indicate test name to run for example \"tc-1.1\" or run " \
               "all by supplying argument all.{1}".format(bcolors.FAIL, bcolors.ENDC)
