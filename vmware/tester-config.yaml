@@ -1,7 +1,14 @@
+#   global configuration setting for trex automation.
+#   here we define a path to each respected scenario.
+#   each scenario file might have N number of scenarios and each scenario might have different flow definition.
 tester:
-   # - test:     1
-   #   name:     "tc-1.1"
-   #   test-scenario:   "/home/trex/v2.36/automation/trex_control_plane/stl/examples.mb/tc-1.1.yaml"
-    - test: 10
-      name: "100flow"
-      test-scenario: "100flow-1.5mpps.yaml"
+    - test:     1
+      name:     "my first 70 byte test"
+      test-scenario:   "scenarios/2lcore/100flow-vm-vm-2lcore-70byte.yaml"
+      test-environment: "scenarios/scenarios/5.2.1/environment-l2core.yaml"
+
+    - test:     2
+      name:     "my second 128 byte test"
+      test-scenario:   "scenarios/2lcore/100flow-vm-vm-2lcore-128byte.yaml"
+      test-environment: "scenarios/scenarios/2lcore/environment-l2core.yaml"
+
