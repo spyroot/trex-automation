@@ -1,9 +1,8 @@
-# trex-automation
+## trex-automation
 trex automation tools
 
-# Project Title
 
-trex automation tools that allows create generic test template and scenario , parepare environment and create custom 
+trex automation tools that allows create generic test template and scenario , parepare environment and create custom
 script that you can run before test execution.
 
 ## Getting Started
@@ -23,12 +22,40 @@ Trex API
 
 ### Installing
 
-A step by step series of examples that tell you have to get a development env running
 
-Say what the step will be
 
 ```
-Give the example
+You need copy files where your trex automation resides
+For example:
+
+$ sudo apt-get install python-yaml
+
+or
+
+pip install pyyaml
+
+or
+
+$ sudo yum install python-yaml
+
+trex instaled in /home/trex/v2.36/
+We create dir
+
+mkdir automation/trex_control_plane/stl/bin
+
+cd to folder where cloned trex automation
+cp ens_tester.py dpdk_environment.py automation/trex_control_plane/stl/bin
+
+create a file stl_path.py and indicate trex python resides
+
+import sys, os
+
+# FIXME to the right path for trex_stl_lib
+cur_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(cur_dir, os.pardir))
+
+STL_PROFILES_PATH = os.path.join(os.pardir, os.pardir, os.pardir, os.pardir, 'stl')
+
 ```
 
 And repeat
@@ -65,13 +92,7 @@ Add additional notes about how to deploy this on a live system
 
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
 ## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Versioning
 
@@ -79,7 +100,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Mustafa Baymov ** - *Initial work* 
 
 See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
@@ -87,9 +108,4 @@ See also the list of [contributors](https://github.com/your/project/contributors
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
-## Acknowledgments
-
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
 
