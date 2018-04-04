@@ -1,0 +1,35 @@
+scenario:
+    - test:     1
+      name:     "imix-bidirectional"
+      test-result:   "/home/trex/Results/imix-bidirectional"
+      test-result-format: ["xlsx", "csv"]
+      report-formater:  ['flow_id', 'tx_pps', 'rx_pps', 'flow_status', 'packet_size']
+      max-iteration: 50
+      max-duration:  60
+      acceptable-loss: 0.001
+      acceptable-rx-overflow: 0.001
+      adaptive: True                    # indicate if we fail a test we drop a rate to next pps
+      port_bw:  1000                    # port bandwidth
+      test-type: "imix-iteration"       # indicate we want to do packet iteration. each flow will be constructed with each respected packet size
+      flows:
+          - flow:   "64-byte-flow-l-r"
+               - range:
+                 src-start:
+                 src-end:
+                 dst-start:
+                 dst-start:
+            id:     1
+            description: "tcp ack"
+            packet-size: 64
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 4                     # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.

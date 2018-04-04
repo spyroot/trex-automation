@@ -1,0 +1,297 @@
+scenario:
+    - test:     1
+      name:     "tc-4.1-bidir"
+      test-result:   "/home/trex/Results/tc-4.1-bidir"
+      test-result-format: ["xlsx", "csv"]
+      report-formater:  ['flow_id', 'tx_pps', 'rx_pps', 'flow_status', 'packet_size']
+      max-iteration: 50
+      max-duration:  10
+      acceptable-loss: 0.001
+      acceptable-rx-overflow: 0.001
+      adaptive: True                    # indicate if we fail a test we drop a rate to next pps
+      port_bw:  1000                    # port bandwidth
+      test-type: "packet-iteration"     # indicate we want to do packet iteration. each flow will be constructed with each respected packet size
+      packet-size:
+          - size: 70
+            percent: 5
+            throttle: 1
+            #- size: 128
+            #percent:  20
+            #throttle: 1
+            #- size: 256
+            #percent: 30
+            #throttle: 1
+            #- size: 512
+            #percent: 80
+            #  throttle: 1
+            #- size: 1024
+            #percent: 90
+            #throttle: 1
+      flows:
+          - flow:   "1-flow"
+            id:     1
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcip:  1.1.1.1
+            dstip:  2.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "2-flow"
+            id:     2
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcip:  1.1.1.1
+            dstip:  3.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "3-flow"
+            id:     3
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcip:  1.1.1.1
+            dstip:  4.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "latency-flow1"          # we generate two flow one line rate for a given packet rate and second flow 1000 pps to messure latency
+            id:     4
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:49:9A"
+            srcip:  1.1.1.1
+            dstip:  2.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]              # egress port id or list of ports [0, 1]
+            ingress_port: [0]             # ingress port id or list of ports [0, 1]
+            rate-mode: fixed              # it in ingress direction  support keyword auto than we calculate from reference bandwith
+            percent: 25                   # 50 percent in one direction auto indicate calucate max pps for given packet size / 2
+            stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: True
+
+          - flow:   "second-flow"
+            id:     5
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"
+            srcip:  2.1.1.2
+            dstip:  1.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "second-flow"
+            id:     6
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"
+            srcip:  2.1.1.2
+            dstip:  3.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "second-flow"
+            id:     7
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"
+            srcip:  2.1.1.2
+            dstip:  4.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "latency-flow2"          # we generate two flow one line rate for a given packet rate and second flow 1000 pps to messure latency
+            id:     8
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:0A:3A"
+            srcip:  2.1.1.2
+            dstip:  1.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]              # egress port id or list of ports [0, 1]
+            ingress_port: [0]             # ingress port id or list of ports [0, 1]
+            rate-mode: fixed              # it in ingress direction  support keyword auto than we calculate from reference bandwith
+            percent: 25                   # 50 percent in one direction auto indicate calucate max pps for given packet size / 2
+            stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: True
+
+          - flow:   "third-flow"
+            id:     9
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:62:B3"
+            srcip:  3.1.1.2
+            dstip:  1.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "third-flow"
+            id:     10
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:62:B3"
+            srcip:  3.1.1.2
+            dstip:  2.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "third-flow"
+            id:     11
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:62:B3"
+            srcip:  3.1.1.2
+            dstip:  4.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "latency-flow3"          # we generate two flow one line rate for a given packet rate and second flow 1000 pps to messure latency
+            id:     12
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:62:B3"
+            srcip:  3.1.1.2
+            dstip:  4.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]              # egress port id or list of ports [0, 1]
+            ingress_port: [0]             # ingress port id or list of ports [0, 1]
+            rate-mode: fixed              # it in ingress direction  support keyword auto than we calculate from reference bandwith
+            percent: 25                   # 50 percent in one direction auto indicate calucate max pps for given packet size / 2
+            stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: True
+
+          - flow:   "fourth-flow"
+            id:     13
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:7C:9A"
+            srcip:  4.1.1.2
+            dstip:  1.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1
+
+          - flow:   "fourth-flow"
+            id:     14
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:7C:9A"
+            srcip:  4.1.1.2
+            dstip:  2.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1
+
+          - flow:   "fourth-flow"
+            id:     15
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:7C:9A"
+            srcip:  4.1.1.2
+            dstip:  3.1.1.2
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]               # egress port id or list of ports [0, 1]
+            ingress_port: [0]              # ingress port id or list of ports [0, 1]
+            rate-mode: auto                # support keyword auto or fixed. auto indicates that we calculate from reference bandwidth a percentage
+            percent: 100                   # 50 percent in one direction relevant only if rate-mode auto
+            #stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: False
+            throttle: 1                    # indicate for how much we reduce rate for adaptive mode.
+
+          - flow:   "latency-flow2"          # we generate two flow one line rate for a given packet rate and second flow 1000 pps to messure latency
+            id:     16
+            srcmac: "3C:FD:FE:B5:27:88"
+            dstmac: "00:50:56:A5:7C:9A"
+            srcip:  4.1.1.2
+            dstip:  3.1.1.1
+            srcport: 1025
+            dstport: 12
+            vlan:   653
+            egress_port: [0]              # egress port id or list of ports [0, 1]
+            ingress_port: [0]             # ingress port id or list of ports [0, 1]
+            rate-mode: fixed              # it in ingress direction  support keyword auto than we calculate from reference bandwith
+            percent: 25                   # 50 percent in one direction auto indicate calucate max pps for given packet size / 2
+            stream-rate: "1000pps"        # stream rate can either pps value or port percentage 10% or 1pps
+            latency: True
