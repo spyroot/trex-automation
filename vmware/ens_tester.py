@@ -219,6 +219,11 @@ def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, paylo
         flow_type = ""
 
     try:
+        if 'vlan' in flow:
+            vlan_detail = flow['vlan']
+        else
+            vlan_detail = "untagged"
+
         # TODO move formatted to configuration file
         flow_table.add_row(["{:,}".format(flow_rate),
                             flow['id'],
@@ -229,7 +234,7 @@ def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, paylo
                             packet_dst_tostring(flow),
                             flow['srcport'],
                             flow['dstport'],
-                            flow['vlan'],
+                            vlan_detail,
                             header_size,
                             payload_size,
                             header_size + payload_size,
@@ -1070,23 +1075,32 @@ def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rat
             STLVmFixIpv4(offset="IP")
         ]
 
-        pkt_base = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
-                   Dot1Q(vlan=flow['vlan']) / \
-                   IP() / \
-                   UDP(dport=flow['srcport'], sport=flow['dstport'])
+        if 'vlan' in flow:
+            pkt_base = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
+                       Dot1Q(vlan=flow['vlan']) / \
+                       IP() / \
+                       UDP(dport=flow['srcport'], sport=flow['dstport'])
+        else:
+            pkt_base = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
+                       IP() / \
+                       UDP(dport=flow['srcport'], sport=flow['dstport'])
 
         pyld_size = packet_size - len(pkt_base)
         pkt_pyld = generate_payload(pyld_size)
         pad = pkt_pyld
         gen_packet = STLPktBuilder(pkt=pkt_base / pkt_pyld, vm=vm)
-        # print packet.to_json()
-        # return
         frame = pkt_base
     else:
-        frame = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
-                Dot1Q(vlan=flow['vlan']) / \
-                IP(src=flow['srcip'], dst=flow['dstip']) / \
-                UDP(dport=flow['srcport'], sport=flow['dstport'])
+        if 'vlan' in flow:
+            frame = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
+                    Dot1Q(vlan=flow['vlan']) / \
+                    IP(src=flow['srcip'], dst=flow['dstip']) / \
+                    UDP(dport=flow['srcport'], sport=flow['dstport'])
+        else:
+            frame = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
+                    IP(src=flow['srcip'], dst=flow['dstip']) / \
+                    UDP(dport=flow['srcport'], sport=flow['dstport'])
+
 
         pad = max(0, packet_size - len(frame)) * 'x'
         gen_packet = STLPktBuilder(pkt=frame / pad)
