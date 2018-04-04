@@ -998,41 +998,6 @@ def calculate_rate(test_scenario=None, flow=None, packet_size=512, verbose=False
 
     return stream_rate
 
-
-#
-# def create_pkt(frame_size=9000, direction=0):
-#     ip_range = {'src': {'start': "10.0.0.1", 'end': "10.0.0.254"},
-#                 'dst': {'start': "8.0.0.1", 'end': "8.0.0.254"}}
-#
-#     if (direction == 0):
-#         src = ip_range['src']
-#         dst = ip_range['dst']
-#     else:
-#         src = ip_range['dst']
-#         dst = ip_range['src']
-#
-#     vm = [
-#         # src
-#         STLVmFlowVar(name="src", min_value=src['start'], max_value=src['end'], size=4, op="inc"),
-#         STLVmWrFlowVar(fv_name="src", pkt_offset="IP.src"),
-#
-#         # dst
-#         STLVmFlowVar(name="dst", min_value=dst['start'], max_value=dst['end'], size=4, op="inc"),
-#         STLVmWrFlowVar(fv_name="dst", pkt_offset="IP.dst"),
-#
-#         # checksum
-#         STLVmFixIpv4(offset="IP")
-#     ]
-#
-#     pkt_base = Ether(src="00:00:00:00:00:01", dst="00:00:00:00:00:02") / IP() / UDP(dport=12, sport=1025)
-#     pyld_size = frame_size - len(pkt_base);
-#     pkt_pyld = generate_payload(pyld_size)
-#
-#     return STLPktBuilder(pkt=pkt_base / pkt_pyld, vm=vm)
-
-# build_frame(flow=flow):
-
-
 def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rate=None, verbose=False):
     """
 
