@@ -1,0 +1,34 @@
+esxi-hosts:
+    - esxi:    1
+      name:   "esxi-host1"
+      host:   "192.168.200.50"
+      password:   "VMware1!"
+      username:   "root"
+      port:   22
+      nsxdp-cli:
+        - cmd: "nsxdp-cli ens port migrate -p 2 -l 1 -d 0;nsxdp-cli ens port migrate -p 2 -l 1 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 3 -l 1 -d 0;nsxdp-cli ens port migrate -p 3 -l 1 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 4 -l 1 -d 0;nsxdp-cli ens port migrate -p 4 -l 1 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 5 -l 1 -d 0;nsxdp-cli ens port migrate -p 5 -l 1 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 6 -l 2 -d 0;nsxdp-cli ens port migrate -p 6 -l 2 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 7 -l 2 -d 0;nsxdp-cli ens port migrate -p 7 -l 2 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 8 -l 2 -d 0;nsxdp-cli ens port migrate -p 8 -l 2 -d 1"
+        - cmd: "nsxdp-cli ens port migrate -p 9 -l 2 -d 0;nsxdp-cli ens port migrate -p 9 -l 2 -d 1"
+
+dpkd-hosts:
+    - dpdk:     1
+      name:   "dpdk-vm1"
+      host:   "192.168.200.59"
+      password:   "VMware1!"
+      username:   "dpdk"
+      port:   22
+      forward-stop: "echo 'VMware1!' | sudo -S kill $(ps aux | grep 'l3fwd' | awk '{print $2}')"
+      forward-start: "echo 'VMware1!' | sudo -S nohup /home/dpdk/startL3fwd-4port-40G-VM-VM.sh >> /tmp/test.log 2>>/tmp/test.log"
+    - dpdk:     2
+      name:     "dpdk-vm1"
+      host:     "192.168.200.61"
+      password:  "VMware1!"
+      username:   "dpdk"
+      port:   22
+      forward-stop: "echo 'VMware1!' | sudo -S kill $(ps aux | grep 'l3fwd' | awk '{print $2}')"
+      forward-start: "echo 'VMware1!' | sudo -S nohup /home/dpdk/startL3fwd-4port-40G-VM-VM.sh >> /tmp/test.log 2>>/tmp/test.log"
