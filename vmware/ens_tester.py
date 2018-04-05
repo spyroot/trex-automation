@@ -220,7 +220,7 @@ def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, paylo
     try:
         if 'vlan' in flow:
             vlan_detail = flow['vlan']
-        else
+        else:
             vlan_detail = "untagged"
 
         # TODO move formatted to configuration file
