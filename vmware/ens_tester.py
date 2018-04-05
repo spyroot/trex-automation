@@ -76,6 +76,8 @@ import yaml
 from dpdk_environment import setup_environment
 from dpdk_environment import teardown_environment
 
+import sys, os; sys.path.append(os.environ['TREX_PATH'])
+
 from decimal import *
 import pprint
 
@@ -170,7 +172,7 @@ def packet_dst_tostring(flow):
             return flow['dstip']
     except KeyError as e:
         print "Mandatory key not present. Check configuration yaml file."
-        print "".format(e)
+        print "Configuration key {0}".format(e.message)
     except TypeError as e:
         print "".format(e)
 
@@ -192,7 +194,7 @@ def packet_src_tostring(flow):
             return flow['srcip']
     except KeyError as e:
         print "Mandatory key not present. Check configuration yaml file."
-        print "".format(e)
+        print "Configuration key {0}".format(e.message)
     except TypeError as e:
         print "".format(e)
 
@@ -240,7 +242,7 @@ def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, paylo
                             flow['max-pps']])
     except KeyError as e:
         print "Mandatory key not present. Check configuration yaml file."
-        print "".format(e)
+        print "Configuration key {0}".format(e.message)
     except TypeError:
         print ""
 
@@ -299,12 +301,12 @@ def save_as_cvs_report(test_result=None, result_filename=None, passed_only=False
                     result_file.write('\n')
     except KeyError as e:
         print "Mandatory key not present. Check configuration yaml file."
-        print "".format(e)
+        print "Configuration key {0}".format(e.message)
     except TypeError:
-        print ""
+        print "".format(e.message)
     except IOError as e:
         print "IO error"
-        print "".format(e)
+        print "{0}".format(e.message)
 
     result_file.write("\n")
     result_file.close()
@@ -330,8 +332,8 @@ def save_as_excel_report(test_result=None, result_filename=None, passed_only=Fal
             workbook = xlsxwriter.Workbook(result_filename)
             worksheet = workbook.add_worksheet()
     except IOError as e:
-        print "IO error"
-        print "".format(e)
+        print "IO error:"
+        print "{0}".format(e.message)
         return False
 
     # headings
@@ -395,10 +397,10 @@ def save_as_excel_report(test_result=None, result_filename=None, passed_only=Fal
                     worksheet.write_number(row, col + 17, flow_record['rx_pps'] + flow_record['rx_pps'], cell_format2)
                     row += 1
     #
-    except TypeError:
-        print ""
+    except TypeError as e:
+        print "Stats doesn't have mandatory key {0}".format(e.message)
     except KeyError as e:
-        print "undefined key"
+        print "Undefined key. error: {0}".format(e.message)
 
     workbook.close()
 
@@ -997,6 +999,41 @@ def calculate_rate(test_scenario=None, flow=None, packet_size=512, verbose=False
 
     return stream_rate
 
+
+#
+# def create_pkt(frame_size=9000, direction=0):
+#     ip_range = {'src': {'start': "10.0.0.1", 'end': "10.0.0.254"},
+#                 'dst': {'start': "8.0.0.1", 'end': "8.0.0.254"}}
+#
+#     if (direction == 0):
+#         src = ip_range['src']
+#         dst = ip_range['dst']
+#     else:
+#         src = ip_range['dst']
+#         dst = ip_range['src']
+#
+#     vm = [
+#         # src
+#         STLVmFlowVar(name="src", min_value=src['start'], max_value=src['end'], size=4, op="inc"),
+#         STLVmWrFlowVar(fv_name="src", pkt_offset="IP.src"),
+#
+#         # dst
+#         STLVmFlowVar(name="dst", min_value=dst['start'], max_value=dst['end'], size=4, op="inc"),
+#         STLVmWrFlowVar(fv_name="dst", pkt_offset="IP.dst"),
+#
+#         # checksum
+#         STLVmFixIpv4(offset="IP")
+#     ]
+#
+#     pkt_base = Ether(src="00:00:00:00:00:01", dst="00:00:00:00:00:02") / IP() / UDP(dport=12, sport=1025)
+#     pyld_size = frame_size - len(pkt_base);
+#     pkt_pyld = generate_payload(pyld_size)
+#
+#     return STLPktBuilder(pkt=pkt_base / pkt_pyld, vm=vm)
+
+# build_frame(flow=flow):
+
+
 def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rate=None, verbose=False):
     """
 
@@ -1337,11 +1374,11 @@ def fixed_packet_size_test(test_scenario=None, generic_stats_tlb=None, console_o
             # populate console report table
             console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
     except KeyError as e:
-        print "{0} Invalid key. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
-        print "".format(e)
+        print "{0}Fixed packet size test: Invalid key. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "Configuration key {0}".format(e.message)
     except TypeError as e:
-        print "{0} Invalid type. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
-        print "".format(e)
+        print "{0}Fixed packet size test: Invalid type. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "{0}".format(e.message)
 
     return True
 
@@ -1428,11 +1465,11 @@ def imix_iteration_test(test_scenario=None, generic_stats_tlb=None, console_outp
             console_report(console_output_tlb=console_output_tlb, generic_stats_tlb=generic_stats_tlb)
 
     except KeyError as e:
-        print "{0} Invalid key. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
-        print "".format(e)
+        print "{0}IMIX iteration test. Invalid key. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
+        print "Configuration key {0}".format(e.message)
     except TypeError as e:
         print "{0} Invalid type. Check configuration file. {1}".format(bcolors.FAIL, bcolors.ENDC)
-        print "".format(e)
+        print "{0}".format(e.message)
 
 
 def read_test_scenarios(config=None):
@@ -1444,7 +1481,7 @@ def read_test_scenarios(config=None):
              each dict contains scenario name as key,  string that represents a path for environment
              and scenario itself as key value pair.
     """
-    test_scenarios = {[]}
+    test_scenarios = {}
     if 'tester' not in config:
         return test_scenarios
 
@@ -1521,7 +1558,6 @@ def execute_scenario(execute=None, test_scenarios=None, test_environment=None, v
                 sys.stdout.write("\r")
                 sys.stdout.flush()
                 print "{0}Stream result: {1}".format(bcolors.OKGREEN, bcolors.ENDC)
-                logging.info("{0}Stream result: {1}".format(bcolors.OKGREEN, bcolors.ENDC))
                 output_result_table(result_table=console_output_tlb)
                 if 'test-result' in test_plan and 'cvs' in test_plan['test-result-format']:
                     file_name = test_plan['test-result'] + ".cvs"
