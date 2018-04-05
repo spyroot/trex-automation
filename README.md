@@ -14,9 +14,10 @@ These instructions will get you a copy of the project up and running on your loc
 Project has following python dependancies
 
 ```
-prettytable
-xlsxwriter
-yaml
+PrettyTable
+XlsxWriter
+YAML
+Paramiko
 Trex API
 ```
 
@@ -36,7 +37,7 @@ $ sudo yum install python-yaml
 
 ```
 
-We install XlsxWriter pretty tables and paramiko packages
+We need install XlsxWriter, PrettyTable and paramiko python packages
 
 ```
 $ sudo pip install XlsxWriter
@@ -78,15 +79,27 @@ $ cd /home/vmware/v2.36/automation/trex_control_plane/stl/examples
 ```
 
 
-
-
 ```
 ```
 
 
-## Running the tests
+## Usage
 
-Explain how to run the automated tests for this system
+Tools provide you option describe each test as the scenario.
+Each scenario described in separate yaml.
+
+For example, we create a tester-config.yaml that consists a list of tests.
+
+
+tester:
+    - test:     1
+      name:     "test 5.1.1"
+      test-scenario:   "scenarios/telia/5.1.1/test.5.1.1.yaml"
+      test-environment: "scenarios/environment-l2core.yaml"         #      test-environment is optional
+
+Here we have to main entry first is path to a test scenarion and path to yaml file that describes
+automation workflow.  Basically if we need prepare test environment we describe list of host
+that we execute automation workflow.
 
 ### Break down into end to end tests
 
