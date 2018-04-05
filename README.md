@@ -41,30 +41,32 @@ $ sudo yum install python-yaml
 trex instaled in /home/trex/v2.36/
 We create dir
 
-mkdir automation/trex_control_plane/stl/bin
+cd automation/trex_control_plane/stl/
+git clone here
 
-cd to folder where cloned trex automation
-cp ens_tester.py dpdk_environment.py automation/trex_control_plane/stl/bin
+It should look
 
-create a file stl_path.py and indicate trex python resides
+$ cd  /home/vmware/v2.36/automation/trex_control_plane/stl
+$ ls
+console  examples  services  trex-automation  trex_stl_lib
 
-import sys, os
+$ sudo su -
+echo "TREX_PATH=/home/vmware/v2.36/automation/trex_control_plane/stl"  /root/.bashrc
+echo "export TREX_PATH" > /root/.bashrc
 
-# FIXME to the right path for trex_stl_lib
-cur_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(cur_dir, os.pardir))
+$ cd /home/vmware/v2.36/automation/trex_control_plane/stl/examples
 
-STL_PROFILES_PATH = os.path.join(os.pardir, os.pardir, os.pardir, os.pardir, 'stl')
+We need that step in order trex-automation find python trex libs
+
+# cp stl_path.py /home/vmware/v2.36/automation/trex_control_plane/stl/trex-automation/vmware
+
 
 ```
 
-And repeat
 
 ```
-until finished
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
 
 ## Running the tests
 
