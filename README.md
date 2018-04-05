@@ -23,11 +23,7 @@ Trex API
 ### Installing
 
 
-
 ```
-You need copy files where your trex automation resides
-For example:
-
 $ sudo apt-get install python-yaml
 
 or
@@ -38,30 +34,50 @@ or
 
 $ sudo yum install python-yaml
 
-trex instaled in /home/trex/v2.36/
-We create dir
+```
 
+We install XlsxWriter pretty tables and paramiko packages
+
+```
+$ sudo pip install XlsxWriter
+$ sudo pip install prettyrable
+$ sudo pip install paramiko
+
+```
+
+
+trex instaled in /home/trex/v2.36/  and we are going to clone repo inside automation/trex_control_plane/stl/
+
+```
+cd /home/trex/v2.36/
 cd automation/trex_control_plane/stl/
-git clone here
+git clone https://github.com/spyroot/trex-automation
+```
 
-It should look
+It should look this
 
+```
 $ cd  /home/vmware/v2.36/automation/trex_control_plane/stl
 $ ls
 console  examples  services  trex-automation  trex_stl_lib
+```
 
+```
 $ sudo su -
 echo "TREX_PATH=/home/vmware/v2.36/automation/trex_control_plane/stl"  /root/.bashrc
 echo "export TREX_PATH" > /root/.bashrc
 
 $ cd /home/vmware/v2.36/automation/trex_control_plane/stl/examples
+```
 
 We need that step in order trex-automation find python trex libs
 
-# cp stl_path.py /home/vmware/v2.36/automation/trex_control_plane/stl/trex-automation/vmware
-
-
 ```
+$ cd /home/vmware/v2.36/automation/trex_control_plane/stl/examples
+# cp stl_path.py /home/vmware/v2.36/automation/trex_control_plane/stl/trex-automation/vmware
+```
+
+
 
 
 ```
