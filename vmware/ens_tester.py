@@ -84,7 +84,6 @@ try:
     from trex_stl_lib.api import *
 except ImportError:
     print "trex not installed."
-    # raise ImportError('<any message you want here>')
 
 from prettytable import PrettyTable
 import xlsxwriter
