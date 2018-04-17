@@ -48,9 +48,9 @@ urllib3.disable_warnings()
 
 # Openstack globals
 AUTH_URL = "https://vio.corp.local:5000/v3"
-USERNAME = "mustafa"
-PASSWORD = "Mustafa123!"
-TENANT_NAME = "ntt"
+USERNAME = "demo"
+PASSWORD = "password"
+TENANT_NAME = "demo"
 VERSION = 2.0
 PROJECT_DOMAIN_ID = 'default'
 USER_DOMAIN_ID = 'default'
