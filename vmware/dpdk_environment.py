@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 """
     Setups dpdk and ens environment.
 
@@ -22,7 +24,7 @@ def openssh(host_config=None, cmds=None, verbose=False):
     client = None
 
     if verbose is True:
-        print "connecting to {0} username {1}".format(host_config['host'], host_config['username'])
+        print("connecting to {0} username {1}".format(host_config['host'], host_config['username']))
 
     try:
         client = paramiko.SSHClient()
@@ -53,11 +55,11 @@ def teardown_environment(config_name):
         for host_config in config['dpkd-hosts']:
             openssh(host_config=host_config, cmds=[host_config['app-stop']])
     except KeyError as e:
-        print "Mandatory key not present. Check configuration yaml file."
-        print "Configuration key {0}".format(e.message)
+        print("Mandatory key not present. Check configuration yaml file.")
+        print("Configuration key {0}".format(e.message))
     except TypeError as e:
-        print "Check configuration yaml file."
-        print "Configuration key {0}".format(e.message)
+        print("Check configuration yaml file.")
+        print("Configuration key {0}".format(e.message))
 
 
 def setup_environment(config_name):
@@ -75,7 +77,7 @@ def setup_environment(config_name):
                 openssh(host_config=host_config, cmds=[host_config['app-stop']])
                 openssh(host_config=host_config, cmds=[host_config['app-start']])
             else:
-                print "App start and app stop must be present for each dpdk-host in the list."
+                print ("App start and app stop must be present for each dpdk-host in the list.")
 
         # we sleep 2 second and give time to all l3fwd start
         # TODO move that to yaml file.
@@ -91,11 +93,11 @@ def setup_environment(config_name):
                     openssh(host_config=esxi_host, cmds=cmd_list)
 
     except KeyError as e:
-        print "Mandatory key not present. Check configuration YAML file."
-        print "Configuration key {0}".format(e.message)
+        print("Mandatory key not present. Check configuration YAML file.")
+        print("Configuration key {0}".format(e.message))
     except TypeError as e:
-        print "Check configuration yaml file."
-        print "Configuration key {0}".format(e.message)
+        print("Check configuration yaml file.")
+        print("Configuration key {0}".format(e.message))
 
 
 if __name__ == "__main__":
