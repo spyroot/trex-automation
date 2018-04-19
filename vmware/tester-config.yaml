@@ -5,10 +5,10 @@ tester:
     - test:     1
       name:     "my first 70 byte test"
       test-scenario:   "scenarios/2lcore/100flow-vm-vm-2lcore-70byte.yaml"
-      test-environment: "scenarios/scenarios/5.2.1/environment-l2core.yaml"
+      test-environment: "scenarios/5.2.1/environment-l2core.yaml"
 
     - test:     2
       name:     "my second 128 byte test"
       test-scenario:   "scenarios/2lcore/100flow-vm-vm-2lcore-128byte.yaml"
-      test-environment: "scenarios/scenarios/2lcore/environment-l2core.yaml"
+      test-environment: "scenarios/2lcore/environment-l2core.yaml"
 
