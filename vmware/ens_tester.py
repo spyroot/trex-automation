@@ -1120,7 +1120,8 @@ def calculate_rate(test_scenario=None, flow=None, packet_size=512, verbose=False
 # build_frame(flow=flow):
 
 
-def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rate=None, verbose=False):
+def build_stream(test_plan=None, flow=None, flow_id=0,
+                 target_packet_size=0, rate=None, verbose=False, macinc=100, randommac=True):
     """
 
     :param verbose:
@@ -1149,18 +1150,36 @@ def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rat
         src = ip_range['src']
         dst = ip_range['dst']
 
-        vm = [
-            # src
-            STLVmFlowVar(name="src", min_value=src['start'], max_value=src['end'], size=4, op="inc"),
-            STLVmWrFlowVar(fv_name="src", pkt_offset="IP.src"),
+        if randommac is True:
+            vm = [
+                # src
+                STLVmFlowVar(name="src", min_value=src['start'], max_value=src['end'], size=4, op="inc"),
+                STLVmWrFlowVar(fv_name="src", pkt_offset="IP.src"),
 
-            # dst
-            STLVmFlowVar(name="dst", min_value=dst['start'], max_value=dst['end'], size=4, op="inc"),
-            STLVmWrFlowVar(fv_name="dst", pkt_offset="IP.dst"),
+                # dst
+                STLVmFlowVar(name="dst", min_value=dst['start'], max_value=dst['end'], size=4, op="inc"),
+                STLVmWrFlowVar(fv_name="dst", pkt_offset="IP.dst"),
 
-            # checksum
-            STLVmFixIpv4(offset="IP")
-        ]
+                # mac
+                STLVmFlowVar(name="mac_src", min_value=1, max_value=macinc, size=1, op="inc"),
+                STLVmWrFlowVar(fv_name="mac_src", pkt_offset=11),
+
+                # checksum
+                STLVmFixIpv4(offset="IP")
+            ]
+        else:
+            vm = [
+                # src
+                STLVmFlowVar(name="src", min_value=src['start'], max_value=src['end'], size=4, op="inc"),
+                STLVmWrFlowVar(fv_name="src", pkt_offset="IP.src"),
+
+                # dst
+                STLVmFlowVar(name="dst", min_value=dst['start'], max_value=dst['end'], size=4, op="inc"),
+                STLVmWrFlowVar(fv_name="dst", pkt_offset="IP.dst"),
+
+                # checksum
+                STLVmFixIpv4(offset="IP")
+            ]
 
         if 'vlan' in flow:
             pkt_base = Ether(src=flow['srcmac'], dst=flow['dstmac']) / \
