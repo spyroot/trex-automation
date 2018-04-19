@@ -1,4 +1,6 @@
 #!/usr/bin/python
+from __future__ import print_function
+
 """
     ENS tester provide automation tool to do regresion test.
 
@@ -81,7 +83,7 @@ import sys, os
 FLOWS = 'flows'
 TESTER_CONFIG_YAML = "tester-config.yaml"
 
-sys.path.append(os.environ['TREX_PATH'])
+#sys.path.append(os.environ['TREX_PATH'])
 
 from decimal import *
 import pprint
@@ -176,10 +178,10 @@ def packet_dst_tostring(flow):
         else:
             return flow['dstip']
     except KeyError as e:
-        print "Mandatory key not present. Check configuration yaml file."
-        print "Configuration key {0}".format(e.message)
+        print("Mandatory key not present. Check configuration yaml file.")
+        print("Configuration key {0}".format(e.message))
     except TypeError as e:
-        print "".format(e)
+        print("".format(e))
 
 
 def packet_src_tostring(flow):
@@ -198,10 +200,10 @@ def packet_src_tostring(flow):
         else:
             return flow['srcip']
     except KeyError as e:
-        print "Mandatory key not present. Check configuration yaml file."
-        print "Configuration key {0}".format(e.message)
+        print("Mandatory key not present. Check configuration yaml file.")
+        print("Configuration key {0}".format(e.message))
     except TypeError as e:
-        print "".format(e)
+        print("".format(e))
 
 
 def append_flow(flow_table=None, flow=None, flow_rate=None, header_size=0, payload_size=0):
@@ -776,7 +778,7 @@ def run(stlclient, stream_list, test_scenario, verbose=False):
 
     # stlclient.start(ports=ingress_ports, mult=target_pps, duration=test_plan['max-duration'])
     stlclient.start(ports=ingress_ports, duration=test_scenario['max-duration'], core_mask=STLClient.CORE_MASK_SPLIT)
-    stlclient.wait_on_traffic(ports=active_ports, timeout=2400, rx_delay_ms=500)
+    stlclient.wait_on_traffic(ports=active_ports, timeout=2400, rx_delay_ms=1000)
 
     # read the stats after the test
     stats = stlclient.get_stats(sync_now=True)
@@ -1218,7 +1220,7 @@ def build_stream(test_plan=None, flow=None, flow_id=0, target_packet_size=0, rat
                            mode=STLTXCont(pps=calculated_rate),
                            flow_stats=STLFlowStats(pg_id=flow["id"]))
     else:
-        stream = STLStream(name="{0} - flow {1}".format(test_plan['name'], flow_id),
+        stream = STLStream(isg = 3.0, name="{0} - flow {1}".format(test_plan['name'], flow_id),
                            packet=gen_packet,
                            mode=STLTXCont(pps=calculated_rate))
 
@@ -1604,7 +1606,7 @@ def read_test_scenarios(config=None):
         print "Error opening file syntax error in yaml file.".format(bcolors.FAIL,
                                                                      test_description['test-scenario'],
                                                                      bcolors.ENDC)
-        print e.message
+        print (e.message)
 
     return test_scenarios
 
@@ -1634,7 +1636,7 @@ def execute_scenario(execute=None, test_scenarios=None, test_environment=None, v
 
             logging.info("Executing test scenario {0}".format(test_plan['name']))
             if test_environment is not None and len(test_environment) > 0:
-                print test_environment
+                print (test_environment)
 
             generic_stats_tlb = []
             console_output_tlb = create_result_table()
@@ -1657,7 +1659,7 @@ def execute_scenario(execute=None, test_scenarios=None, test_environment=None, v
             if len(generic_stats_tlb) > 0:
                 sys.stdout.write("\r")
                 sys.stdout.flush()
-                print "{0}Stream result: {1}".format(bcolors.OKGREEN, bcolors.ENDC)
+                print ("{0}Stream result: {1}".format(bcolors.OKGREEN, bcolors.ENDC))
                 output_result_table(result_table=console_output_tlb)
                 if 'test-result' in test_plan and 'cvs' in test_plan['test-result-format']:
                     file_name = test_plan['test-result'] + ".cvs"
@@ -1675,7 +1677,7 @@ def execute_scenario(execute=None, test_scenarios=None, test_environment=None, v
                     teardown_environment(test_environment)
 
     except KeyError as e:
-        print "key error".format(e.message)
+        print ("key error".format(e.message))
 
 
 def main(execute=None, verbose=True, config_file=None):
@@ -1688,7 +1690,7 @@ def main(execute=None, verbose=True, config_file=None):
     :return:
     """
     if verbose is True:
-        print "Reading default configuration file {0}".format("%s" % TESTER_CONFIG_YAML)
+        print("Reading default configuration file {0}".format("%s" % TESTER_CONFIG_YAML))
 
     if config_file is None or len(config_file) is 0:
         logging.info("Reading default configuration file {0}".format(TESTER_CONFIG_YAML))
@@ -1708,8 +1710,8 @@ if __name__ == "__main__":
     """
     """
     if len(sys.argv) < 2:
-        print "{0}Error: Please indicate test name to run for example \"tc-1.1\" or run " \
-              "all by supplying argument all.{1}".format(bcolors.FAIL, bcolors.ENDC)
+        print("{0}Error: Please indicate test name to run for example \"tc-1.1\" or run " \
+              "all by supplying argument all.{1}".format(bcolors.FAIL, bcolors.ENDC))
 
         sys.exit(10)
 
