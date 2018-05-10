@@ -1,6 +1,6 @@
 velocloud:
     enterpriseId:          42                                       # we need to know id in order to get activation key
-    vce-vco:               "vco54-usvi1.velocloud.net"
+    vce-vco:               "hostname"
     vco-username:          "mbayramov@vmware.com"
     vco-password:          "123456"
     ovf-filename:          "VeloCloud-Edge.ovf"                      # we should have ovf file and vmdk file in vnf-dir
