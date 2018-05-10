@@ -1,0 +1,23 @@
+// key are here
+include "/etc/bind/ddns-keys.conf";
+zone "vmwaremybootstrap.com" IN {
+        type master;
+        file "/var/lib/bind/db.vmwaremybootstrap.com";
+        update-policy {
+                grant ddns-key zonesub ANY;
+                grant *.vmwaremybootstrap.com. selfsub vmwaremybootstrap.com. A AAAA TXT;
+        };
+        notify no;
+};
+
+// I use 10.10.10.0 network so make sure you have reverse zone created
+// script does reverse lookup since strong swan provide us IP not a hostname so in order on board a host
+// we do reverse DNS lookup
+zone "10.10.10.in-addr.arpa" {
+       type master;
+       file "/var/lib/bind/db.10.10.10";
+       update-policy {
+            grant ddns-key zonesub ANY;
+        };
+       notify no;
+};
