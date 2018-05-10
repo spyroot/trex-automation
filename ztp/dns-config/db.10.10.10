@@ -1,0 +1,14 @@
+$ORIGIN .
+$TTL 604800	; 1 week
+10.10.10.in-addr.arpa	IN SOA	ns1.vmwaremybootstrap.com. root.vmwaremybootstrap.com. (
+				6          ; serial
+				604800     ; refresh (1 week)
+				86400      ; retry (1 day)
+				2419200    ; expire (4 weeks)
+				604800     ; minimum (1 week)
+				)
+			NS	ns1.
+$ORIGIN 10.10.10.in-addr.arpa.
+$TTL 60	; 1 minute
+1			PTR	5aa4a687-b8a6-1700-849c-b8aeedec1090.sub.vmwaremybootstrap.com.
+2			PTR	5aa4a687-b8a6-1700-849c-b8aeedec1090.sub.vmwaremybootstrap.com.
