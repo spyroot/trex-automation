@@ -2,9 +2,9 @@ velocloud:
     enterpriseId:          42                                       # we need to know id in order to get activation key
     vce-vco:               "vco54-usvi1.velocloud.net"
     vco-username:          "mbayramov@vmware.com"
-    vco-password:          "Velocloud123"
+    vco-password:          "123456"
     ovf-filename:          "VeloCloud-Edge.ovf"                      # we should have ovf file and vmdk file in vnf-dir
-    vnf-default-password:  "VMware1!"                                # default password for edge
+    vnf-default-password:  "123456"                                # default password for edge
     vnf-default-name:      "velo-edge-vc"                            # default name search on each new host
     profile-name:           "verizon"                                # VCO should have this profile
     vnf-dir:               "/Users/spyroot/PycharmProjects/ydk-netconf/vcenter/image"
