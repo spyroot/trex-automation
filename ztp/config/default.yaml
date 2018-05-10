@@ -26,7 +26,10 @@ vnf-network:
        interface-name:         ["GE2", "GE4", "GE5"]
        vlan_id:                0
 
-ampq:
+ampq:                        # here we defined detail about rabitmq
+    hostname:                "192.168.254.244"
+    username:                "admin"
+    password:                "password"
     queue_name:              "vnfonboarding"
 
 vcenter:
