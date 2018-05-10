@@ -1,0 +1,43 @@
+velocloud:
+    enterpriseId:          42                                       # we need to know id in order to get activation key
+    vce-vco:               "vco54-usvi1.velocloud.net"
+    vco-username:          "mbayramov@vmware.com"
+    vco-password:          "Velocloud123"
+    ovf-filename:          "VeloCloud-Edge.ovf"                      # we should have ovf file and vmdk file in vnf-dir
+    vnf-default-password:  "VMware1!"                                # default password for edge
+    vnf-default-name:      "velo-edge-vc"                            # default name search on each new host
+    profile-name:           "verizon"                                # VCO should have this profile
+    vnf-dir:               "/Users/spyroot/PycharmProjects/ydk-netconf/vcenter/image"
+    image-dir:             "/Users/spyroot/PycharmProjects/ydk-netconf/vcenter/final_image"
+
+vnf-network:
+    topology:
+     - network:                1
+       vswitch:                "vSwitch2"
+       port-group-name:        "VeloOutside"
+       pnic:                   "vusb0"                              # todo add multi pnic support
+       interface-name:         ["GE1", "GE3"]
+       vlan_id:                0
+
+     - network:                 2
+       vswitch:                "vSwitch3"
+       port-group-name:        "VeloInside"
+       pnic:                   "vusb1"
+       interface-name:         ["GE2", "GE4", "GE5"]
+       vlan_id:                0
+
+ampq:
+    queue_name:              "vnfonboarding"
+
+vcenter:
+    ip:                         "172.16.254.203"
+    user:                       "Administrator@vmwarelab.local"
+    password:                   "VMware1!"
+    default_esxi_username:      "root"
+    default_esxi_password:      "VMware1!"
+    default_ip:                 "10.10.10.2"
+    topology:
+     - dc: one
+       name: Datacenter
+       clusters:
+           - name: uCPE
